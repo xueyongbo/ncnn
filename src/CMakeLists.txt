@@ -27,6 +27,10 @@ set(ncnn_SRCS
     benchmark.cpp
 )
 
+if (ANDROID)
+    list(APPEND ncnn_SRCS mat_pixel_android.cpp)
+endif()
+
 macro(ncnn_add_layer class)
     string(TOLOWER ${class} name)
 
@@ -261,6 +265,8 @@ ncnn_add_layer(Requantize)
 ncnn_add_layer(Cast)
 ncnn_add_layer(HardSigmoid)
 ncnn_add_layer(SELU)
+ncnn_add_layer(HardSwish)
+ncnn_add_layer(Noop)
 
 add_custom_target(generate-spirv DEPENDS ${SHADER_SPV_HEX_FILES})
 
@@ -290,11 +296,7 @@ endif()
 
 if(NCNN_VULKAN)
     find_package(Vulkan REQUIRED)
-
-    add_library(Vulkan UNKNOWN IMPORTED)
-    set_target_properties(Vulkan PROPERTIES IMPORTED_LOCATION ${Vulkan_LIBRARY})
-    set_target_properties(Vulkan PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${Vulkan_INCLUDE_DIR})
-    target_link_libraries(ncnn PUBLIC Vulkan)
+    target_link_libraries(ncnn PUBLIC Vulkan::Vulkan)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC"
