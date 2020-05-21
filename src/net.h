@@ -15,19 +15,22 @@
 #ifndef NCNN_NET_H
 #define NCNN_NET_H
 
-#include <stdio.h>
-#include <vector>
 #include "platform.h"
 #include "blob.h"
 #include "layer.h"
 #include "mat.h"
 #include "option.h"
 
+#if __ANDROID_API__ >= 9
+#include <android/asset_manager.h>
+#endif // __ANDROID_API__ >= 9
+
 namespace ncnn {
 
 #if NCNN_VULKAN
 class VkCompute;
 #endif // NCNN_VULKAN
+class DataReader;
 class Extractor;
 class Net
 {
@@ -60,6 +63,14 @@ public:
     // return 0 if success
     int register_custom_layer(int index, layer_creator_func creator);
 
+#if NCNN_STRING
+    int load_param(const DataReader& dr);
+#endif // NCNN_STRING
+
+    int load_param_bin(const DataReader& dr);
+
+    int load_model(const DataReader& dr);
+
 #if NCNN_STDIO
 #if NCNN_STRING
     // load network structure from plain param file
@@ -91,6 +102,21 @@ public:
     // return bytes consumed
     int load_model(const unsigned char* mem);
 
+#if __ANDROID_API__ >= 9
+#if NCNN_STRING
+    // convenient load network structure from android asset plain param file
+    int load_param(AAsset* asset);
+    int load_param(AAssetManager* mgr, const char* assetpath);
+#endif // NCNN_STRING
+    // convenient load network structure from android asset binary param file
+    int load_param_bin(AAsset* asset);
+    int load_param_bin(AAssetManager* mgr, const char* assetpath);
+
+    // convenient load network weight data from android asset model file
+    int load_model(AAsset* asset);
+    int load_model(AAssetManager* mgr, const char* assetpath);
+#endif // __ANDROID_API__ >= 9
+
     // unload network structure and weight data
     void clear();
 
@@ -120,10 +146,11 @@ protected:
     Layer* create_custom_layer(const char* type);
 #endif // NCNN_STRING
     Layer* create_custom_layer(int index);
-    int forward_layer(int layer_index, std::vector<Mat>& blob_mats, Option& opt) const;
+    int forward_layer(int layer_index, std::vector<Mat>& blob_mats, const Option& opt) const;
 
 #if NCNN_VULKAN
-    int forward_layer(int layer_index, std::vector<Mat>& blob_mats, std::vector<VkMat>& blob_mats_gpu, VkCompute& cmd, Option& opt) const;
+    int forward_layer(int layer_index, std::vector<Mat>& blob_mats, std::vector<VkMat>& blob_mats_gpu, VkCompute& cmd, const Option& opt) const;
+    int forward_layer(int layer_index, std::vector<Mat>& blob_mats, std::vector<VkMat>& blob_mats_gpu, std::vector<VkImageMat>& blob_mats_gpu_image, VkCompute& cmd, const Option& opt) const;
 #endif // NCNN_VULKAN
 
 protected:
@@ -137,17 +164,14 @@ protected:
 
     VkAllocator* weight_vkallocator;
     VkAllocator* weight_staging_vkallocator;
-
-    ncnn::Layer* cast_float32_to_float16;
-    ncnn::Layer* cast_float16_to_float32;
-    ncnn::Layer* packing_pack1;
-    ncnn::Layer* packing_pack4;
 #endif // NCNN_VULKAN
 };
 
 class Extractor
 {
 public:
+    ~Extractor();
+
     // enable light mode
     // intermediate blob will be recycled when enabled
     // enabled by default
@@ -201,6 +225,14 @@ public:
     // get result by blob name
     // return 0 if success
     int extract(const char* blob_name, VkMat& feat, VkCompute& cmd);
+
+    // set input by blob name
+    // return 0 if success
+    int input(const char* blob_name, const VkImageMat& in);
+
+    // get result by blob name
+    // return 0 if success
+    int extract(const char* blob_name, VkImageMat& feat, VkCompute& cmd);
 #endif // NCNN_STRING
 
     // set input by blob index
@@ -210,11 +242,19 @@ public:
     // get result by blob index
     // return 0 if success
     int extract(int blob_index, VkMat& feat, VkCompute& cmd);
+
+    // set input by blob index
+    // return 0 if success
+    int input(int blob_index, const VkImageMat& in);
+
+    // get result by blob index
+    // return 0 if success
+    int extract(int blob_index, VkImageMat& feat, VkCompute& cmd);
 #endif // NCNN_VULKAN
 
 protected:
     friend Extractor Net::create_extractor() const;
-    Extractor(const Net* net, int blob_count);
+    Extractor(const Net* net, size_t blob_count);
 
 private:
     const Net* net;
@@ -222,7 +262,11 @@ private:
     Option opt;
 
 #if NCNN_VULKAN
+    VkAllocator* local_blob_vkallocator;
+    VkAllocator* local_staging_vkallocator;
+
     std::vector<VkMat> blob_mats_gpu;
+    std::vector<VkImageMat> blob_mats_gpu_image;
 #endif // NCNN_VULKAN
 };
 

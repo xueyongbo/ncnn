@@ -22,7 +22,12 @@ namespace ncnn {
 class HardSwish_arm : virtual public HardSwish
 {
 public:
+    HardSwish_arm();
+
     virtual int forward_inplace(Mat& bottom_top_blob, const Option& opt) const;
+
+protected:
+    int forward_inplace_bf16s(Mat& bottom_top_blob, const Option& opt) const;
 };
 
 } // namespace ncnn
