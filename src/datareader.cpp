@@ -13,6 +13,7 @@
 // specific language governing permissions and limitations under the License.
 
 #include "datareader.h"
+
 #include <string.h>
 
 namespace ncnn {
@@ -34,7 +35,8 @@ size_t DataReader::read(void* /*buf*/, size_t /*size*/) const
 }
 
 #if NCNN_STDIO
-DataReaderFromStdio::DataReaderFromStdio(FILE* _fp) : fp(_fp)
+DataReaderFromStdio::DataReaderFromStdio(FILE* _fp)
+    : fp(_fp)
 {
 }
 
@@ -51,7 +53,8 @@ size_t DataReaderFromStdio::read(void* buf, size_t size) const
 }
 #endif // NCNN_STDIO
 
-DataReaderFromMemory::DataReaderFromMemory(const unsigned char*& _mem) : mem(_mem)
+DataReaderFromMemory::DataReaderFromMemory(const unsigned char*& _mem)
+    : mem(_mem)
 {
 }
 
@@ -60,7 +63,7 @@ int DataReaderFromMemory::scan(const char* format, void* p) const
 {
     size_t fmtlen = strlen(format);
 
-    char* format_with_n = new char[fmtlen + 3];
+    char* format_with_n = new char[fmtlen + 4];
     sprintf(format_with_n, "%s%%n", format);
 
     int nconsumed = 0;
@@ -81,7 +84,8 @@ size_t DataReaderFromMemory::read(void* buf, size_t size) const
 }
 
 #if __ANDROID_API__ >= 9
-DataReaderFromAndroidAsset::DataReaderFromAndroidAsset(AAsset* _asset) : asset(_asset), mem(0)
+DataReaderFromAndroidAsset::DataReaderFromAndroidAsset(AAsset* _asset)
+    : asset(_asset), mem(0)
 {
 }
 

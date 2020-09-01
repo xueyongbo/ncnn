@@ -13,12 +13,10 @@
 // specific language governing permissions and limitations under the License.
 
 #include "deepcopy_vulkan.h"
-#include <algorithm>
+
 #include "layer_shader_type.h"
 
 namespace ncnn {
-
-DEFINE_LAYER_CREATOR(DeepCopy_vulkan)
 
 DeepCopy_vulkan::DeepCopy_vulkan()
 {
@@ -161,8 +159,8 @@ int DeepCopy_vulkan::forward(const VkMat& bottom_blob, VkMat& top_blob, VkComput
     constants[4].i = bottom_blob.cstep;
 
     const Pipeline* pipeline = elempack == 8 ? pipeline_deepcopy_pack8
-                             : elempack == 4 ? pipeline_deepcopy_pack4
-                             : pipeline_deepcopy;
+                               : elempack == 4 ? pipeline_deepcopy_pack4
+                               : pipeline_deepcopy;
 
     cmd.record_pipeline(pipeline, bindings, constants, top_blob);
 
@@ -186,11 +184,11 @@ int DeepCopy_vulkan::forward(const VkImageMat& bottom_blob, VkImageMat& top_blob
     constants[1].i = bottom_blob.w;
     constants[2].i = bottom_blob.h;
     constants[3].i = bottom_blob.c;
-    constants[4].i = 0;//bottom_blob.cstep;
+    constants[4].i = 0; //bottom_blob.cstep;
 
     const Pipeline* pipeline = elempack == 8 ? pipeline_deepcopy_pack8
-                             : elempack == 4 ? pipeline_deepcopy_pack4
-                             : pipeline_deepcopy;
+                               : elempack == 4 ? pipeline_deepcopy_pack4
+                               : pipeline_deepcopy;
 
     cmd.record_pipeline(pipeline, bindings, constants, top_blob);
 
